@@ -666,15 +666,15 @@ label {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Status em andamento - amarelo âmbar */
+/* Status em andamento (Amarelo) */
 .em-andamento {
     background: rgba(180, 130, 0, 0.3);
     color: rgba(255, 220, 80, 0.95);
     border-color: rgba(255, 200, 50, 0.3);
 }
 
-/* Status em análise - verde */
-.em-análise {
+/* Status em atendimento (Verde - Aceito pelo professor) */
+.em-atendimento {
     background: rgba(20, 120, 60, 0.3);
     color: rgba(100, 255, 160, 0.95);
     border-color: rgba(50, 200, 100, 0.3);
@@ -952,6 +952,26 @@ label {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
     border: 1px dashed rgba(255, 80, 80, 0.25);
     color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Agrupa o nome, tipo e data com alinhamento vertical */
+.chamada-destaque .info-destaque {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Botão pequeno rápido do painel de destaque */
+.btn-pequeno {
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+    width: auto !important;
+    font-weight: 600 !important;
 }
 
 /* Ponto pulsante vermelho */

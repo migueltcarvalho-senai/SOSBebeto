@@ -27,11 +27,12 @@ if ($acao === 'criar_chamada') {
     }
 
     try {
-        // Insere os dados como um pedido 'em andamento' no SOSBebeto 
-        $stmt = $pdo->prepare("INSERT INTO ajuda (nome_aluno, email_google, descricao, tipo, hora, status_ajuda) VALUES (?, ?, ?, ?, NOW(), 'em andamento')");
+        // Insere os dados como um pedido 'Em andamento' no SOSBebeto 
+        $stmt = $pdo->prepare("INSERT INTO ajuda (nome_aluno, email_google, descricao, tipo, hora, status_ajuda) VALUES (?, ?, ?, ?, NOW(), 'Em andamento')");
         $stmt->execute([$nome, $email_google, $descricao, $tipo]);
         echo json_encode(['sucesso' => true]);
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         echo json_encode(['sucesso' => false, 'erro' => 'Erro ao salvar no banco: ' . $e->getMessage()]);
     }
     exit;
@@ -55,12 +56,16 @@ if ($acao === 'mudar_status') {
             // Exclui a mensagem permanentemente do SOSBebeto
             $stmt = $pdo->prepare("DELETE FROM ajuda WHERE id = ?");
             $stmt->execute([$id]);
-        } else {
+        }
+        else {
             // Converte ação de botão em status real no MySQL
             $status_banco = '';
-            if ($status_novo === 'aceitar') $status_banco = 'em analise'; // SEM ACENTO
-            if ($status_novo === 'finalizar') $status_banco = 'encerramento';
-            if ($status_novo === 'reabrir') $status_banco = 'em andamento';
+            if ($status_novo === 'aceitar')
+                $status_banco = 'em atendimento'; // Correcao ENUM
+            if ($status_novo === 'finalizar')
+                $status_banco = 'encerramento';
+            if ($status_novo === 'reabrir')
+                $status_banco = 'Em andamento'; // Correcao ENUM
 
             if ($status_banco) {
                 $stmt = $pdo->prepare("UPDATE ajuda SET status_ajuda = ? WHERE id = ?");
@@ -68,7 +73,8 @@ if ($acao === 'mudar_status') {
             }
         }
         echo json_encode(['sucesso' => true]);
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         echo json_encode(['sucesso' => false, 'erro' => 'Erro na ação do professor: ' . $e->getMessage()]);
     }
     exit;
@@ -97,7 +103,7 @@ if ($acao === 'listar_ajudas_abertas') {
             $tipo = htmlspecialchars($c['tipo']);
             $nome = htmlspecialchars($c['nome_aluno']);
             $status = htmlspecialchars($c['status_ajuda']);
-            
+
             // Renderiza o visual de blocos do aluno com os dados dinâmicos do banco
             echo "<div class='ajuda-item'>
                     <strong>{$nome}</strong> pediu ajuda.
@@ -106,7 +112,8 @@ if ($acao === 'listar_ajudas_abertas') {
                     <span>{$hora_formatada}</span>
                   </div>";
         }
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         echo "<p class='erro'>Ocorreu um erro ao consultar o banco de dados.</p>";
     }
     exit;
@@ -122,7 +129,7 @@ if ($acao === 'listar_ajudas_professor') {
 
     try {
         // [1] Carregar os itens em atendimento da vez pro topo (destaque)
-        $stmtEmAnalise = $pdo->prepare("SELECT * FROM ajuda WHERE LOWER(status_ajuda) = 'em analise' ORDER BY hora $ordem_sql");
+        $stmtEmAnalise = $pdo->prepare("SELECT * FROM ajuda WHERE LOWER(status_ajuda) = 'em atendimento' ORDER BY hora $ordem_sql");
         $stmtEmAnalise->execute();
         $emAnalise = $stmtEmAnalise->fetchAll(PDO::FETCH_ASSOC);
 
@@ -130,11 +137,15 @@ if ($acao === 'listar_ajudas_professor') {
             echo "<div class='em-atendimento-destaque'>
                     <h3><div class='pulse-dot'></div> Alunos em Atendimento</h3>";
             foreach ($emAnalise as $c) {
+                $id = $c['id'];
                 $nome = htmlspecialchars($c['nome_aluno']);
                 $tipo = htmlspecialchars($c['tipo']);
                 $hora_formatada = date('H:i', strtotime($c['hora']));
                 echo "<div class='chamada-destaque'>
-                        <strong>{$nome}</strong> - <u>{$tipo}</u> <span class='hora-badge'>{$hora_formatada}</span>
+                        <div class='info-destaque'>
+                            <strong>{$nome}</strong> - <u>{$tipo}</u> <span class='hora-badge'>{$hora_formatada}</span>
+                        </div>
+                        <button class='btn btn-finalizar btn-pequeno' onclick='acaoChamada({$id}, \"finalizar\")'>🏁 Finalizar</button>
                       </div>";
             }
             echo "</div>";
@@ -150,11 +161,11 @@ if ($acao === 'listar_ajudas_professor') {
         $sql = "SELECT * FROM ajuda $where ORDER BY 
                 CASE LOWER(status_ajuda) 
                     WHEN 'em andamento' THEN 1 
-                    WHEN 'em analise' THEN 2 
+                    WHEN 'em atendimento' THEN 2 
                     WHEN 'encerramento' THEN 3 
                     ELSE 4 
                 END, hora $ordem_sql";
-                
+
         $stmt = $pdo->query($sql);
         $todas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -172,12 +183,12 @@ if ($acao === 'listar_ajudas_professor') {
             $descricao = $c['descricao'] ? htmlspecialchars($c['descricao']) : "Sem descrição extra enviada.";
             $status = htmlspecialchars($c['status_ajuda']);
             $hora_formatada = date('H:i - d/m', strtotime($c['hora']));
-            
+
             // Garantir as classes corretas com a tag do status para pintar o badge no CSS
             $status_lower_para_css = mb_strtolower($c['status_ajuda'], 'UTF-8');
             $status_lower_para_css = str_replace('á', 'a', $status_lower_para_css); // Normalizar
             $classe_status = str_replace(' ', '-', $status_lower_para_css);
-            
+
             echo "<div class='chamada' id='chamada-{$id}' data-status_ocupado=''>
                     <div class='cabecalho-chamada' onclick='expandirChamada({$id})'>
                         <div class='info-principal'>
@@ -193,7 +204,7 @@ if ($acao === 'listar_ajudas_professor') {
                         <p><strong>Descrição informada pelo aluno:</strong></p>
                         <p>{$descricao}</p>
                         <div class='acoes'>";
-            
+
             $stat_lower = strtolower(trim($c['status_ajuda']));
             // Remover acentos para garantir comparação segura
             $stat_lower = preg_replace('/[áàãâä]/u', 'a', $stat_lower);
@@ -207,19 +218,22 @@ if ($acao === 'listar_ajudas_professor') {
             if ($stat_lower === 'em andamento') {
                 echo "<button class='btn btn-excluir' onclick='acaoChamada({$id}, \"excluir\")'>🗑️ Excluir</button>
                       <button class='btn btn-aceitar' onclick='acaoChamada({$id}, \"aceitar\")'>✅ Aceitar Aluno</button>";
-            } elseif ($stat_lower === 'em analise') { // Fica s/ acento pela conversão acima
+            }
+            elseif ($stat_lower === 'em atendimento') {
                 echo "<button class='btn btn-finalizar' onclick='acaoChamada({$id}, \"finalizar\")'>🏁 Finalizar Atendimento</button>";
-            } elseif ($stat_lower === 'encerramento') {
+            }
+            elseif ($stat_lower === 'encerramento') {
                 echo "<button class='btn btn-excluir' onclick='acaoChamada({$id}, \"excluir\")'>🗑️ Limpar do Histórico</button>
                       <button class='btn btn-reabrir' onclick='acaoChamada({$id}, \"reabrir\")'>🔄 Reabrir Chamada</button>";
             }
-            
+
             echo "      </div>
                     </div>
                   </div>";
         }
-    } catch (Exception $e) {
-        echo "<p class='erro'>Erro ao carregar lista. Detalhe técnico: ".$e->getMessage()."</p>";
+    }
+    catch (Exception $e) {
+        echo "<p class='erro'>Erro ao carregar lista. Detalhe técnico: " . $e->getMessage() . "</p>";
     }
     exit;
 }
@@ -229,13 +243,14 @@ if ($acao === 'listar_ajudas_professor') {
 // ==================================================
 if ($acao === 'verificar_email_docente') {
     $email = trim($_POST['email_google'] ?? '');
-    
+
     // Se o remetente for do corpo docente senai, faça a transição pro modelo professor
     if (strpos($email, '@docente.senai.br') !== false) {
         $_SESSION['prof_logado'] = true;
         $_SESSION['email_docente'] = $email;
         echo json_encode(['docente' => true]);
-    } else {
+    }
+    else {
         echo json_encode(['docente' => false]);
     }
     exit;
