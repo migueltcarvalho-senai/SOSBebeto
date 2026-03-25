@@ -1,0 +1,1257 @@
+/* Novas fontes do projeto */
+@font-face {
+    font-family: 'Secundaria';
+    src: url('fontes/star/secundaria.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Detalhes';
+    src: url('fontes/star/detalhes.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* =========================================================
+   SOSBebeto - Tema Star Wars "Dark Empire"
+   Frontend Specialist - Orbitron + Dark Motion BG + Liquid Glass Buttons
+   ========================================================= */
+
+/* Reset global e fontes */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    /* Garante que nenhum elemento herde fonte errada por padrao */
+}
+
+/* =========================================================
+   1. FUNDO ANIMADO - Degradê Preto/Cinza Escuro Dinâmico
+   As cores se movem suavemente, como névoa galáctica
+   ========================================================= */
+body {
+    font-family: 'Secundaria', system-ui, sans-serif;
+    /* Secundaria para titulos e conteudos principais */
+    background: #0a0a0a;
+    /* Fundo base preto absoluto */
+    background-image:
+        radial-gradient(ellipse at 20% 30%, #1c1c1c 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 70%, #161616 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 50%, #0f0f0f 0%, transparent 80%);
+    background-size: 200% 200%, 200% 200%, 200% 200%;
+    animation: cosmicBG 18s ease-in-out infinite;
+    min-height: 100vh;
+    color: #ffffff;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Movimento suave do degradê de preto e cinza escuro - como névoa no espaço */
+@keyframes cosmicBG {
+    0% {
+        background-position: 0% 0%, 100% 100%, 50% 50%;
+    }
+
+    25% {
+        background-position: 100% 0%, 0% 100%, 60% 40%;
+    }
+
+    50% {
+        background-position: 100% 100%, 0% 0%, 40% 60%;
+    }
+
+    75% {
+        background-position: 0% 100%, 100% 0%, 55% 45%;
+    }
+
+    100% {
+        background-position: 0% 0%, 100% 100%, 50% 50%;
+    }
+}
+
+/* =========================================================
+   2. PARTÍCULAS DE FUNDO - Estrelas/quadrados no espaço
+   Substituídas por partículas menores e mais sutis (estilo estrelas)
+   ========================================================= */
+.bg-animation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* Estrelas - circulares, brilhantes, como no espaco sideral dos filmes */
+.animated-square {
+    position: absolute;
+    bottom: -150px;
+    background: rgba(255, 255, 255, 0.9);
+    /* Mais opaco para aparecer bem */
+    border-radius: 50%;
+    /* Circular como estrelas reais */
+    box-shadow:
+        0 0 4px rgba(255, 255, 255, 0.9),
+        /* Brilho proximo branco */
+        0 0 10px rgba(255, 255, 255, 0.5),
+        /* Halo medio */
+        0 0 20px rgba(255, 220, 220, 0.2);
+    /* Aura distante levemente rosada */
+    animation: starFly linear forwards;
+    filter: none;
+    /* Sem blur para ficar nítida e visível */
+}
+
+/* Estrelas se movendo em linhas retas para baixo - como ao entrar em hiperespaco */
+@keyframes starFly {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 0;
+        /* Nasce invisivel */
+    }
+
+    8% {
+        opacity: 1;
+        /* Aparece rapido com brilho pleno */
+    }
+
+    85% {
+        opacity: 0.9;
+        /* Sustenta por quase toda a jornada */
+    }
+
+    100% {
+        transform: translateY(-120vh) scale(0.5);
+        /* Diminui ao se distanciar */
+        opacity: 0;
+    }
+}
+
+/* =========================================================
+   3. FAIXAS NEON AVERMELHADAS - Da direita para a esquerda
+   Ficam na parte inferior da tela, animadas continuamente
+   ========================================================= */
+/* Faixa neon inferior - linha fina de 2px varrendo da direita para a esquerda */
+body::after {
+    content: '';
+    position: fixed;
+    bottom: 6px;
+    /* Ligeiramente acima da borda */
+    left: 0;
+    width: 100%;
+    height: 2px;
+    /* Linha fina de 2px como pedido */
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(180, 0, 0, 0) 5%,
+            rgba(255, 80, 80, 0.95) 25%,
+            rgba(255, 40, 40, 1) 50%,
+            rgba(255, 80, 80, 0.95) 75%,
+            rgba(180, 0, 0, 0) 95%,
+            transparent 100%);
+    background-size: 200% 100%;
+    animation: neonSweep 3s linear infinite;
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow:
+        0 0 6px rgba(255, 50, 50, 0.9),
+        /* Brilho proximo */
+        0 0 16px rgba(200, 0, 0, 0.6),
+        /* Halo medio */
+        0 0 30px rgba(150, 0, 0, 0.3);
+    /* Aura distante */
+    filter: none;
+    /* Sem blur - linha nitida */
+}
+
+/* Segunda faixa neon - 1px, mais rapida e levemente deslocada */
+body::before {
+    content: '';
+    position: fixed;
+    bottom: 12px;
+    /* Logo acima da primeira faixa */
+    left: 0;
+    width: 100%;
+    height: 1px;
+    /* Ultra fina - 1px */
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 0, 0, 0) 10%,
+            rgba(255, 120, 120, 0.8) 30%,
+            rgba(255, 80, 80, 0.95) 50%,
+            rgba(255, 120, 120, 0.8) 70%,
+            rgba(255, 0, 0, 0) 90%,
+            transparent 100%);
+    background-size: 200% 100%;
+    animation: neonSweep 2s linear infinite reverse;
+    /* Vai na mesma direcao mas mais rapida */
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow:
+        0 0 4px rgba(255, 100, 100, 0.8),
+        0 0 12px rgba(200, 0, 0, 0.4);
+}
+
+/* Movimento da direita para a esquerda como pedido */
+@keyframes neonSweep {
+    0% {
+        background-position: 100% 0%;
+    }
+
+    100% {
+        background-position: -100% 0%;
+    }
+}
+
+/* =========================================================
+   4. CONTAINERS - DIVs pretas com borda branca e luz/sombra
+   Mantém as posições, muda apenas o visual
+   ========================================================= */
+.login-container,
+.painel-container {
+    background: rgba(5, 5, 5, 0.85);
+    /* Preto quase sólido, levemente transparente */
+    width: 90%;
+    margin: 60px auto;
+    padding: 40px;
+    border-radius: 4px 20px 4px 20px;
+    /* Mantém as bordas orgânicas */
+    border: 1.5px solid rgba(255, 255, 255, 0.75);
+    /* Borda branca como pedido */
+    box-shadow:
+        0 0 30px rgba(255, 255, 255, 0.04),
+        /* Luz sutil ao redor */
+        0 8px 32px rgba(0, 0, 0, 0.8),
+        /* Sombra pesada embaixo */
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    /* Brilho interno sutil no topo */
+    opacity: 0;
+    animation: pageLoadPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    backdrop-filter: blur(2px);
+}
+
+/* Layout do login centralizado */
+.login-container {
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transform-origin: center bottom;
+}
+
+/* Layout do painel principal */
+.painel-container {
+    max-width: 1000px;
+}
+
+/* Animação de entrada das telas */
+@keyframes pageLoadPop {
+    0% {
+        opacity: 0;
+        transform: translateY(40px) scale(0.95) rotate(-2deg);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg);
+    }
+}
+
+/* =========================================================
+   5. LOGO - Estilo Empire com borda branca
+   ========================================================= */
+.logo-robs {
+    width: 130px;
+    height: 130px;
+    border-radius: 40px 15px 40px 15px;
+    object-fit: cover;
+    margin-bottom: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    /* Borda branca na logo */
+    box-shadow:
+        0 0 20px rgba(255, 255, 255, 0.15),
+        /* Luz branca ao redor */
+        0 0 40px rgba(180, 0, 0, 0.2);
+    /* Leve glow vermelho distante */
+    animation: organicBounce 4s infinite ease-in-out;
+    filter: brightness(0.9) contrast(1.1);
+}
+
+@keyframes organicBounce {
+    0% {
+        transform: translateY(0) rotate(-3deg);
+        border-radius: 40px 15px 40px 15px;
+    }
+
+    50% {
+        transform: translateY(-10px) rotate(3deg);
+        border-radius: 15px 40px 15px 40px;
+    }
+
+    100% {
+        transform: translateY(0) rotate(-3deg);
+        border-radius: 40px 15px 40px 15px;
+    }
+}
+
+/* =========================================================
+   6. TIPOGRAFIA - Texto branco, títulos com fonte espacial
+   ========================================================= */
+/* H2 - Secundaria: fonte de títulos e destaques */
+h2 {
+    font-family: 'Secundaria', sans-serif;
+    font-weight: normal;
+    letter-spacing: 0.08em;
+    color: #ffffff;
+    text-shadow:
+        0 0 15px rgba(255, 255, 255, 0.5),
+        0 0 40px rgba(255, 220, 220, 0.2);
+}
+
+/* H3 - Secundaria tambem */
+h3 {
+    font-family: 'Secundaria', sans-serif;
+    font-weight: normal;
+    letter-spacing: 0.06em;
+    color: #ffffff;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+/* Classe utilitaria para forcar Secundaria em outros elementos se necessario */
+.sw-title,
+.sw-deco {
+    font-family: 'Secundaria', sans-serif !important;
+    letter-spacing: 0.07em;
+}
+
+/* Tamanhos para StarJedi - a fonte ja tem personalidade propria, menos px basta */
+h2 {
+    font-size: 20px;
+    /* StarJedi tem letras largas, 20px ja impacta bastante */
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+h3 {
+    font-size: 16px;
+}
+
+p {
+    font-family: 'Detalhes', sans-serif; /* Detalhes para descricoes secundarias */
+    font-size: 15px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.75);
+    /* Branco levemente opaco */
+}
+
+/* Topo do painel com linha divisória */
+.topo-painel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    /* Linha branca sutil */
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* =========================================================
+   7. BOTÕES - Vermelho Liquid Glass como pedido
+   Degradê suave entre vermelho e vermelho escuro com efeito de vidro
+   ========================================================= */
+button,
+.btn {
+    font-family: 'Secundaria', sans-serif;
+    background: linear-gradient(135deg,
+            rgba(220, 30, 30, 0.9) 0%,
+            rgba(160, 10, 10, 0.95) 50%,
+            rgba(180, 20, 20, 0.9) 100%);
+    /* Degradê vermelho → vermelho escuro (Liquid Glass) */
+    color: #ffffff;
+    border: 1px solid rgba(255, 100, 100, 0.5);
+    /* Borda vermelha translúcida */
+    box-shadow:
+        0 2px 8px rgba(200, 0, 0, 0.4),
+        /* Sombra vermelha */
+        inset 0 1px 0 rgba(255, 150, 150, 0.3),
+        /* Reflexo interno no topo (efeito vidro) */
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+    /* Sombra interna embaixo */
+    padding: 14px 28px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.2s ease-out;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(4px);
+    /* Efeito vidro sutil */
+}
+
+/* Reflexo de vidro por cima do botão - pseudoelemento */
+button::before,
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.12) 0%,
+            rgba(255, 255, 255, 0) 100%);
+    /* Reflexo de luz no topo */
+    border-radius: 12px 12px 0 0;
+    pointer-events: none;
+}
+
+/* Hover: botão fica mais brilhante */
+button:hover,
+.btn:hover {
+    background: linear-gradient(135deg,
+            rgba(255, 50, 50, 0.95) 0%,
+            rgba(200, 15, 15, 1) 50%,
+            rgba(220, 30, 30, 0.95) 100%);
+    box-shadow:
+        0 4px 16px rgba(255, 0, 0, 0.5),
+        0 0 24px rgba(200, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 180, 180, 0.4),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+    transform: translateY(-2px);
+    border-color: rgba(255, 130, 130, 0.7);
+}
+
+/* Clique: pressiona para baixo */
+button:active,
+.btn:active {
+    transform: translateY(1px);
+    box-shadow:
+        0 1px 4px rgba(200, 0, 0, 0.4),
+        inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Desabilitado */
+button:disabled,
+.btn:disabled {
+    background: rgba(50, 50, 50, 0.6);
+    color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Botão de voltar - mesmo tom mas menos saturado */
+.btn-voltar {
+    background: linear-gradient(135deg,
+            rgba(100, 20, 20, 0.8) 0%,
+            rgba(60, 10, 10, 0.9) 100%);
+    color: rgba(255, 200, 200, 0.9);
+}
+
+.btn-voltar:hover {
+    background: linear-gradient(135deg,
+            rgba(150, 30, 30, 0.9) 0%,
+            rgba(100, 15, 15, 1) 100%);
+}
+
+/* Botão de excluir - vermelho vivo */
+.btn-excluir {
+    background: linear-gradient(135deg,
+            rgba(200, 0, 0, 0.95) 0%,
+            rgba(140, 0, 0, 1) 100%);
+    color: white;
+}
+
+/* =========================================================
+   8. INPUTS E FORMULÁRIOS - Dark com borda branca
+   ========================================================= */
+input[type="text"],
+input[type="password"],
+textarea {
+    width: 100%;
+    padding: 16px 20px;
+    margin-top: 8px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    /* Borda branca sutil */
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    background: rgba(20, 20, 20, 0.8);
+    /* Fundo escuro */
+    color: #ffffff;
+    /* Texto branco */
+    transition: all 0.2s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    /* Placeholder cinza claro */
+}
+
+input:focus,
+textarea:focus {
+    outline: none;
+    border-color: rgba(255, 80, 80, 0.6);
+    /* Borda vermelha no foco */
+    background: rgba(30, 10, 10, 0.9);
+    box-shadow:
+        inset 0 2px 4px rgba(0, 0, 0, 0.4),
+        0 0 12px rgba(200, 0, 0, 0.2);
+    /* Glow vermelho sutil no foco */
+}
+
+/* Rótulo do input */
+/* Labels - StarJediRounded para consistencia com os titulos */
+label {
+    font-family: 'Detalhes', sans-serif;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 13px;
+    font-weight: normal;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* =========================================================
+   9. BARRA DE AUTH DO GOOGLE
+   ========================================================= */
+#googleAuthBar {
+    padding: 12px 24px;
+    margin: 16px auto 0;
+    max-width: 90%;
+    border-radius: 100px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(15, 15, 15, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.nao-logado {
+    background: rgba(60, 40, 10, 0.8);
+    color: rgba(255, 220, 100, 0.9);
+    border-color: rgba(255, 200, 50, 0.3);
+}
+
+.logado {
+    background: rgba(10, 40, 20, 0.8);
+    color: rgba(100, 255, 150, 0.9);
+    border-color: rgba(50, 200, 80, 0.3);
+}
+
+/* =========================================================
+   10. CARDS DE CHAMADA/AJUDA - Preto com borda branca e luz/sombra
+   ========================================================= */
+#listaAjudas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+/* Cards internos - pretos com borda branca */
+.ajuda-item,
+.chamada {
+    background: rgba(8, 8, 8, 0.9);
+    /* Preto profundo */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* Borda branca */
+    padding: 24px;
+    margin-bottom: 0;
+    border-radius: 4px 20px 4px 20px;
+    gap: 5px;
+    transition: all 0.25s ease;
+    box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.6),
+        /* Sombra profunda */
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    /* Brilho interno leve no topo */
+    opacity: 0;
+    animation: itemLoadPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes itemLoadPop {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) rotate(2deg);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+/* Hover do card - borda fica mais brilhante */
+.ajuda-item:hover,
+.chamada:hover {
+    transform: translate(-4px, -4px) rotate(-1deg);
+    border-color: rgba(255, 255, 255, 0.5);
+    /* Borda branca mais viva */
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.7),
+        0 0 20px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border-radius: 20px 4px 20px 4px;
+}
+
+#listaChamadas {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.cabecalho-chamada {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    cursor: pointer;
+    gap: 12px;
+}
+
+.info-principal {
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+    width: 100%;
+}
+
+.info-principal strong {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 17px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* =========================================================
+   11. BADGES DE STATUS
+   ========================================================= */
+.badge {
+    padding: 5px 12px;
+    text-align: center;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Status em andamento - amarelo âmbar */
+.em-andamento {
+    background: rgba(180, 130, 0, 0.3);
+    color: rgba(255, 220, 80, 0.95);
+    border-color: rgba(255, 200, 50, 0.3);
+}
+
+/* Status em análise - verde */
+.em-análise {
+    background: rgba(20, 120, 60, 0.3);
+    color: rgba(100, 255, 160, 0.95);
+    border-color: rgba(50, 200, 100, 0.3);
+}
+
+/* Encerramento - cinza */
+.encerramento {
+    background: rgba(60, 60, 60, 0.5);
+    color: rgba(200, 200, 200, 0.8);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* =========================================================
+   12. DETALHES DA CHAMADA
+   ========================================================= */
+.detalhes-chamada {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    /* Divisória sutil */
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+    animation: fadeInPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    flex-grow: 1;
+}
+
+@keyframes fadeInPop {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.chamada.expandido .detalhes-chamada {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.acoes {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+/* =========================================================
+   13. MODAIS - Vidro escuro com borda branca
+   ========================================================= */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    /* Overlay muito escuro */
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+}
+
+/* Conteúdo do modal - preto com borda branca */
+.modal-content {
+    background: rgba(8, 8, 8, 0.95);
+    /* Preto profundo */
+    padding: 40px;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* Borda branca */
+    width: 90%;
+    max-width: 560px;
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.8),
+        0 0 40px rgba(255, 255, 255, 0.03),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    animation: popModalBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popModalBounce {
+    from {
+        transform: scale(0.8) rotate(5deg);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* Cabeçalho do modal */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Botão fechar modal */
+.close-btn {
+    background: linear-gradient(135deg, rgba(180, 20, 20, 0.8) 0%, rgba(120, 10, 10, 0.9) 100%);
+    color: rgba(255, 200, 200, 0.9);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 80, 80, 0.4);
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow:
+        0 2px 8px rgba(200, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 150, 150, 0.2);
+    transition: all 0.15s;
+}
+
+.close-btn:hover {
+    background: linear-gradient(135deg, rgba(220, 40, 40, 0.9) 0%, rgba(160, 20, 20, 1) 100%);
+    box-shadow:
+        0 4px 16px rgba(255, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 180, 180, 0.3);
+    transform: scale(1.1);
+}
+
+.close-btn:active {
+    transform: scale(0.95);
+}
+
+/* =========================================================
+   14. BOTÕES TIPO DO MODAL (Categorias)
+   ========================================================= */
+.botoes-tipo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 12px;
+    margin-bottom: 24px;
+}
+
+/* Botão de tipo - tom escuro com borda */
+.btn-tipo {
+    background: rgba(30, 10, 10, 0.8);
+    color: rgba(255, 200, 200, 0.9);
+    border: 1px solid rgba(255, 80, 80, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+}
+
+.btn-tipo:hover {
+    background: rgba(60, 15, 15, 0.9);
+    border-color: rgba(255, 100, 100, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(200, 0, 0, 0.2);
+}
+
+/* Ativo: vermelho preenchido */
+.btn-tipo.ativo {
+    background: linear-gradient(135deg, rgba(200, 20, 20, 0.9) 0%, rgba(140, 10, 10, 1) 100%);
+    color: white;
+    border-color: rgba(255, 80, 80, 0.6);
+    box-shadow:
+        0 2px 8px rgba(200, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 150, 150, 0.2);
+    transform: none;
+}
+
+/* =========================================================
+   15. FILTROS DO PROFESSOR
+   ========================================================= */
+.filtros-professor {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: rgba(12, 12, 12, 0.85);
+    padding: 16px 24px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    margin-bottom: 32px;
+}
+
+/* =========================================================
+   16. CHECKBOX CUSTOMIZADO (DARK)
+   ========================================================= */
+.brutalist-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+}
+
+.brutalist-toggle input[type="checkbox"] {
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.15s ease-out;
+    cursor: pointer;
+    position: relative;
+    background: rgba(20, 20, 20, 0.8);
+}
+
+.brutalist-toggle input[type="checkbox"]:checked {
+    background: rgba(180, 20, 20, 0.9);
+    border-color: rgba(255, 80, 80, 0.6);
+    box-shadow: 0 0 8px rgba(200, 0, 0, 0.4);
+}
+
+.brutalist-toggle input[type="checkbox"]:checked::after {
+    content: "✖";
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 900;
+}
+
+/* =========================================================
+   17. DESTAQUE ATENDIMENTO
+   ========================================================= */
+.em-atendimento-destaque {
+    background: rgba(15, 5, 5, 0.9);
+    border: 1px solid rgba(255, 80, 80, 0.3);
+    /* Borda levemente vermelha aqui */
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 0 20px rgba(200, 0, 0, 0.1);
+    padding: 24px;
+    border-radius: 24px;
+    margin-bottom: 32px;
+    transform: rotate(-1deg);
+    transition: transform 0.3s;
+}
+
+.em-atendimento-destaque:hover {
+    transform: rotate(1deg);
+}
+
+.em-atendimento-destaque h3 {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    color: rgba(255, 200, 200, 0.95);
+}
+
+/* Card interno do destaque */
+.chamada-destaque {
+    background: rgba(20, 10, 10, 0.9);
+    padding: 20px 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    border: 1px dashed rgba(255, 80, 80, 0.25);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Ponto pulsante vermelho */
+.pulse-dot {
+    width: 14px;
+    height: 14px;
+    background: #ef4444;
+    border: 1px solid rgba(255, 100, 100, 0.5);
+    border-radius: 50%;
+    display: inline-block;
+    animation: hardcorePulse 1s infinite alternate;
+    margin-right: 12px;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+@keyframes hardcorePulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+
+    100% {
+        transform: scale(1.3);
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    }
+}
+
+/* =========================================================
+   18. RIPPLE NOS BOTÕES - Branco agora
+   ========================================================= */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple-anim 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    background-color: rgba(255, 255, 255, 0.35);
+    pointer-events: none;
+}
+
+@keyframes ripple-anim {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* =========================================================
+   19. RADIO GROUP - Dark Style
+   ========================================================= */
+.radio-group {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 32px;
+    margin-top: 12px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 15px;
+    background: rgba(20, 20, 20, 0.8);
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.radio-group label:has(input:checked) {
+    background: rgba(150, 10, 10, 0.7);
+    border-color: rgba(255, 80, 80, 0.5);
+    color: rgba(255, 200, 200, 1);
+    box-shadow:
+        0 2px 12px rgba(200, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 150, 150, 0.2);
+}
+
+.radio-group input {
+    width: 18px;
+    height: 18px;
+    accent-color: #cc2222;
+    cursor: pointer;
+}
+
+/* =========================================================
+   20. MENSAGEM DE ERRO
+   ========================================================= */
+.erro-msg {
+    color: rgba(255, 200, 200, 0.95);
+    background: rgba(100, 5, 5, 0.7);
+    border: 1px solid rgba(255, 80, 80, 0.4);
+    box-shadow:
+        0 4px 12px rgba(200, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 150, 150, 0.1);
+    padding: 16px 20px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    font-size: 15px;
+    font-weight: 600;
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-10px) rotate(-2deg);
+    }
+
+    50% {
+        transform: translateX(10px) rotate(2deg);
+    }
+
+    75% {
+        transform: translateX(-10px) rotate(-2deg);
+    }
+}
+
+/* =========================================================
+   21. SCROLLBAR CUSTOMIZADA - Dark
+   ========================================================= */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0a0a0a;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(150, 20, 20, 0.7);
+    border-radius: 10px;
+    border: 2px solid #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(200, 30, 30, 0.9);
+}
+
+/* =========================================================
+   22. RESPONSIVIDADE (Mobile / Tablet) - Posições mantidas
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    /* Ajustes Gerais de Container */
+    .login-container,
+    .painel-container {
+        width: 95%;
+        margin: 20px auto;
+        padding: 24px 20px;
+    }
+
+    /* Topo do Painel - Empilhado */
+    .topo-painel {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+        gap: 16px;
+    }
+
+    .topo-painel h2 {
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+
+    .topo-painel div {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 12px;
+    }
+
+    .topo-painel .btn {
+        width: 100%;
+    }
+
+    /* Barra do Google Auth */
+    #googleAuthBar {
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+        text-align: center;
+        border-radius: 20px;
+    }
+
+    #infoLogin {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    /* Modal - Ajustes de Espaço */
+    .modal-content {
+        padding: 24px 20px;
+        border-radius: 16px 4px 16px 4px;
+        margin: 10px;
+        width: 95%;
+    }
+
+    /* Grid do Modal */
+    .botoes-tipo {
+        grid-template-columns: 1fr;
+    }
+
+    /* Radio Group Login */
+    .radio-group {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Ajuste da Logo */
+    .logo-robs {
+        width: 100px;
+        height: 100px;
+    }
+
+    /* Lista Help e Grid */
+    #listaAjudas {
+        grid-template-columns: 1fr;
+    }
+
+    .ajuda-item,
+    .chamada {
+        padding: 20px;
+    }
+
+    /* Professor Filters */
+    .filtros-professor {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16px;
+        gap: 16px;
+    }
+
+    /* Badges */
+    .badge {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+}
+
+/* =========================================================
+   BOTÃO DE LOGIN - Fonte especial com troca no hover
+   Normal: AurekBesh (alfabeto alienígena Star Wars)
+   Hover:  StarJediRounded (Jedi arredondado - revela o conteúdo)
+   ========================================================= */
+
+/* Estado normal: AurekBesh - o texto parece escrito em Aurebesh (lingua galatica) */
+.btn-submit {
+    font-family: 'AurekBesh', sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.12em;
+    /* Mais espaçado para dar o charme alienígena */
+    transition:
+        font-size 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+        letter-spacing 0.35s ease,
+        transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.35s ease,
+        background 0.35s ease;
+    /* Animacao suave de revelacao - como se o texto fosse decodificado */
+    will-change: transform, letter-spacing;
+}
+
+/* Hover: StarJediRounded - o texto "se revela" na fonte Jedi arredondada */
+.btn-submit:hover {
+    font-family: 'StarJediRounded', sans-serif;
+    font-size: 15px;
+    /* Levemente menor porque StarJediRounded é mais larga */
+    letter-spacing: 0.08em;
+    /* Espaçamento reduz ao revelar */
+    transform: translateY(-3px) scale(1.04);
+    /* Sobe e cresce levemente ao revelar */
+    box-shadow:
+        0 6px 20px rgba(255, 0, 0, 0.5),
+        0 0 30px rgba(200, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 180, 180, 0.4),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Tooltip sutil indicando que o botão tem interação especial */
+.btn-submit::after {
+    content: '';
+    /* Apenas o glow - sem texto para nao poluir */
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+            rgba(255, 100, 100, 0.15),
+            transparent 70%);
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}

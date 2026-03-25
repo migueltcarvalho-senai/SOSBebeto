@@ -1,0 +1,679 @@
+# 📋 Relatório Técnico Completo — Aplicação "Renelp" (Sistema de Fila de Ajuda)
+
+> **Objetivo deste documento:** Descrever CADA arquivo, CADA função e CADA funcionalidade da aplicação de forma tão detalhada que outra IA consiga recriar o sistema inteiro com nomes e designs diferentes, mas com funcionalidades idênticas.
+
+---
+
+## 1. Visão Geral da Aplicação
+
+**O que é:** Um sistema web de "Fila de Ajuda" para um ambiente escolar (SENAI). Alunos pedem ajuda ao professor, que gerencia uma fila de chamadas em tempo real.
+
+**Stack tecnológico:**
+- **Backend:** PHP 8+ com PDO (MySQL)
+- **Frontend:** HTML5 + CSS3 + JavaScript Vanilla (sem frameworks)
+- **Banco de dados:** MySQL (via XAMPP)
+- **Autenticação:** Google Identity Services (OAuth/JWT no lado do cliente)
+- **Hospedagem:** Compatível com InfinityFree (Linux) e XAMPP local (Windows)
+
+**Dois tipos de usuários:**
+
+| Papel | Acesso | Senha |
+|-------|--------|-------|
+| **Aluno** | Livre (sem senha), mas exige login Google | — |
+| **Professor** | Protegido por senha fixa OU email `@docente.senai.br` | `123456789` |
+
+---
+
+## 2. Estrutura de Arquivos
+
+```
+Renelp/
+├── config.php              ← Conexão com o banco de dados
+├── index.php               ← Página de login (escolha Aluno/Professor)
+├── aluno.php               ← Painel do aluno (pedir ajuda + ver fila)
+├── professor.php           ← Painel do professor (gerenciar fila)
+├── backend.php             ← API centralizada (todas as ações AJAX)
+├── script do banco.sql     ← Script DDL do banco de dados
+├── assets/
+│   ├── style.css           ← Estilos globais de toda aplicação
+│   ├── aluno.js            ← Lógica JavaScript do aluno
+│   ├── professor.js        ← Lógica JavaScript do professor
+│   ├── effects.js          ← Efeitos visuais globais (fundo + ripple)
+│   └── images/
+│       └── renan.jpg       ← Logo/ícone da aplicação
+```
+
+---
+
+## 3. Banco de Dados
+
+### 3.1 Criação do Banco
+
+```sql
+CREATE DATABASE renelp_ajuda;
+USE renelp_ajuda;
+```
+
+### 3.2 Tabela `ajuda`
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | `INT AUTO_INCREMENT PK` | Identificador único da chamada |
+| `nome_aluno` | `VARCHAR(255)` | Nome completo do aluno (preenchido via Google) |
+| `email_google` | `VARCHAR(255)` | Email Google do aluno (adicionado em runtime, não no DDL original) |
+| `descricao` | `VARCHAR(255)` | Descrição do problema (só preenchida quando tipo = "outros", senão `NULL`) |
+| `tipo` | `VARCHAR(255)` | Tipo do problema selecionado pelo aluno |
+| `hora` | `DATETIME` | Data/hora de criação da chamada (gerada por `NOW()`) |
+| `status_ajuda` | `ENUM / VARCHAR` | Status atual: `"em andamento"`, `"em análise"`, `"encerramento"` |
+
+> **Nota sobre `status_ajuda`:** No DDL original era `ENUM("Em andamento", "em atendimento", "encerramento")`, mas no backend PHP os valores usados de fato são: `"em andamento"` (minúsculo), `"em análise"` e `"encerramento"`. A coluna precisa aceitar esses três valores.
+
+### 3.3 Ciclo de Vida do Status
+
+```
+[em andamento] → Professor clica "Aceitar" → [em análise]
+[em análise]   → Professor clica "Finalizar" → [encerramento]
+[encerramento] → Professor clica "Reabrir"  → [em andamento]  ← REABERTURA
+[qualquer]     → Professor clica "Excluir"  → DELETADO DO BANCO
+```
+
+---
+
+## 4. Arquivo por Arquivo — Detalhamento Completo
+
+---
+
+### 4.1 `config.php` — Conexão com o Banco de Dados
+
+**Finalidade:** Criar uma conexão PDO com o MySQL e configurar o fuso horário.
+
+#### Variáveis de configuração:
+- `$host` = `'127.0.0.1'`
+- `$port` = `'3307'` (padrão XAMPP pode ser 3306)
+- `$dbname` = `'renelp_ajuda'`
+- `$user` = `'root'`
+- `$pass` = `''` (vazio)
+
+#### Função `configurarFusoHorarioPDO($pdo)`
+- **O que faz:** Configura o fuso horário do MySQL para UTC-3 (Brasília) usando `SET time_zone = '-03:00'`
+- **Por quê:** Garante que `NOW()` retorne a hora de Brasília, independente da configuração do servidor
+- **Se falhar:** Ignora silenciosamente (try/catch)
+
+#### Bloco de conexão:
+1. Cria `new PDO(...)` com charset UTF-8
+2. Ativa `ERRMODE_EXCEPTION`
+3. Chama `configurarFusoHorarioPDO($pdo)`
+4. Se falhar: exibe mensagem de erro amigável com `die()`
+
+**Variável global criada:** `$pdo` — usada por todos que fazem `require_once 'config.php'`
+
+---
+
+### 4.2 `index.php` — Página de Login
+
+**Finalidade:** Tela inicial com escolha entre Aluno e Professor.
+
+#### Lógica PHP (linhas 1–28):
+1. `session_start()` — inicia sessão para controle de autenticação
+2. Se o formulário foi enviado (`POST`):
+   - Se `tipo_login === 'aluno'` → redireciona para `aluno.php` (sem senha)
+   - Se `tipo_login === 'professor'`:
+     - Verifica se a senha digitada é `'123456789'`
+     - Se correta: define `$_SESSION['prof_logado'] = true` e redireciona para `professor.php`
+     - Se incorreta: define `$erro = "Senha incorreta para professor!"`
+
+#### HTML:
+- Container centralizado (`.login-container`) com:
+  - Logo (imagem `assets/images/renan.jpg`)
+  - Título "Sistema de Ajuda"
+  - Dois radio buttons: "Aluno" (marcado por padrão) e "Professor"
+  - Campo de senha escondido (`#divSenha`, `display: none`)
+  - Botão "Entrar" (`.btn-submit`)
+  - Se `$erro` existir, mostra mensagem vermelha
+
+#### Função JavaScript `toggleSenha(valorSelecionado)`
+- **Fluxo:** Quando o radio muda:
+  - Se `'professor'` → mostra `#divSenha` (`display: block`)
+  - Se `'aluno'` → esconde `#divSenha` (`display: none`)
+- Se houver erro (página recarregada com erro), o PHP força `checked` em "professor" e chama `toggleSenha('professor')`
+
+#### Scripts importados:
+- `assets/effects.js` (com cache buster `?v=<?= time() ?>`)
+
+---
+
+### 4.3 `aluno.php` — Painel do Aluno
+
+**Finalidade:** Permitir que o aluno peça ajuda e veja a fila de chamadas em andamento.
+
+#### Estrutura HTML:
+1. **Barra de autenticação Google** (`#googleAuthBar`):
+   - **Estado não logado** (`.nao-logado`): fundo amarelo, aviso "Você precisa entrar com sua conta Google", botão de login renderizado pelo Google SDK
+   - **Estado logado** (`.logado`): fundo verde, foto do perfil, email, botão "Sair / Trocar Conta"
+
+2. **Topo do painel** (`.topo-painel`):
+   - Título "Fila de Ajuda - Alunos"
+   - Botão "+ Criar Nova Ajuda" (chama `abrirModal()`)
+   - Link "Sair" (volta para `index.php`)
+
+3. **Lista de chamadas** (`#listaAjudas`):
+   - Div vazia preenchida por AJAX a cada 5 segundos
+
+4. **Modal de pedido de ajuda** (`#modalAjuda`):
+   - Botão X para fechar
+   - Campo de nome (`#nomeAluno`) — preenchido automaticamente pelo Google e tornado `readOnly`
+   - 5 botões de seleção de tipo de problema:
+     - `"Programação de atividades"`
+     - `"mau funcionamento do computador"` (label: "Mau funcionamento de hardware")
+     - `"problemas com os programas do computador"` (label: "Problemas com Programas")
+     - `"ajuda com os projetos"` (label: "Ajuda com Projetos")
+     - `"outros"` (label: "Outros Problemas") — ocupa 2 colunas no grid
+   - Campo textarea para descrição (`#descricaoProblema`) — só visível se tipo = "outros"
+   - Botão "Enviar Pedido de Ajuda" (`#btnEnviar`)
+
+#### Scripts importados:
+- Google Identity Services SDK (`accounts.google.com/gsi/client`)
+- `assets/aluno.js`
+- `assets/effects.js`
+
+---
+
+### 4.4 `professor.php` — Painel do Professor
+
+**Finalidade:** Painel protegido para o professor gerenciar a fila de chamadas.
+
+#### Lógica PHP:
+1. `session_start()`
+2. **Barreira de segurança:** Se `$_SESSION['prof_logado'] !== true` → redireciona para `index.php`
+3. **Logout:** Se `$_GET['sair']` existe → `session_destroy()` e redireciona para `index.php`
+
+#### HTML:
+1. **Topo** (`.topo-painel`):
+   - Título "Fila de Ajudas (Painel do Professor)"
+   - **Filtros** (`.filtros-professor`):
+     - **Toggle "Mais Antiga Primeiro"** (`#toggleOrdem`): checkbox estilizado brutalista, chama `alternarOrdem()`
+     - **Toggle "Ocultar Finalizadas"** (`#toggleOcultar`): checkbox estilizado brutalista, chama `alternarOcultar()`
+     - **Link "Sair do Painel"** (`?sair=1`)
+   - Aviso "Clique na caixa do aluno para abrir e tomar uma ação"
+
+2. **Lista de chamadas** (`#listaChamadas`):
+   - Div vazia preenchida por AJAX a cada 5 segundos
+
+#### Scripts importados:
+- `assets/professor.js`
+- `assets/effects.js`
+
+---
+
+### 4.5 `backend.php` — API Central (Todas as Ações)
+
+**Finalidade:** Processar TODAS as requisições AJAX da aplicação. Um único arquivo com 5 blocos de ação identificados pelo parâmetro `acao`.
+
+#### Cabeçalho:
+- `session_start()`
+- `require_once 'config.php'`
+- Pega `$acao` de `$_POST['acao']` ou `$_GET['acao']`
+
+---
+
+#### BLOCO 1: `acao = 'criar_chamada'` (POST — Aluno cria um pedido)
+
+**Fluxo completo:**
+1. Recebe: `nome`, `tipo`, `descricao`, `email_google`
+2. **Regra de negócio sobre descrição:**
+   - Se `tipo !== 'outros'` → `$descricao = null` (a descrição fica nula)
+   - Se `tipo === 'outros'` → `$tipo = 'outros'` e `$descricao` fica com o texto digitado
+3. Valida que `email_google` não está vazio
+4. Insere no banco: `INSERT INTO ajuda (nome_aluno, email_google, descricao, tipo, hora, status_ajuda) VALUES (?, ?, ?, ?, NOW(), 'em andamento')`
+5. **Retorna JSON:** `{ "sucesso": true }` ou `{ "sucesso": false, "erro": "..." }`
+
+---
+
+#### BLOCO 2: `acao = 'mudar_status'` (POST — Professor muda status)
+
+**Barreira:** Verifica `$_SESSION['prof_logado'] === true`. Se não, retorna erro.
+
+**Recebe:** `id` e `status_novo`
+
+| `status_novo` | Ação no Banco | SQL |
+|----------------|---------------|-----|
+| `'excluir'` | **DELETA** a chamada completamente | `DELETE FROM ajuda WHERE id = ?` |
+| `'aceitar'` | Muda para `'em análise'` | `UPDATE ... SET status_ajuda = 'em análise'` |
+| `'finalizar'` | Muda para `'encerramento'` | `UPDATE ... SET status_ajuda = 'encerramento'` |
+| `'reabrir'` | **Reabre**, volta para `'em andamento'` | `UPDATE ... SET status_ajuda = 'em andamento'` |
+
+**Retorna JSON:** `{ "sucesso": true }` ou erro.
+
+> **⚠️ FUNCIONALIDADES CRÍTICAS:**
+> - **Exclusão:** Remove permanentemente do banco (botão "Excluir" / "Limpar do Histórico")
+> - **Reabertura:** Chamada encerrada volta ao início do ciclo (botão "Reabrir Chamada")
+
+---
+
+#### BLOCO 3: `acao = 'listar_ajudas_abertas'` (GET — Lista para o Aluno)
+
+**Fluxo:**
+1. Busca todas as chamadas onde `status_ajuda != 'encerramento'` (usando `LOWER()` para segurança case-sensitive)
+2. Ordena por `hora DESC` (mais recente primeiro)
+3. Se vazio: retorna `<p class='aviso'>Nenhum pedido na fila. Turma tranquila! 😎</p>`
+4. Para cada chamada, gera HTML:
+   ```html
+   <div class='ajuda-item'>
+       <strong>{nome_aluno}</strong> pediu ajuda.
+       <small>Tipo: {tipo}</small>
+       <span class='badge {classe_status}'>{status_ajuda}</span>
+       <span>{hora formatada H:i - d/m}</span>
+   </div>
+   ```
+5. A `{classe_status}` é gerada convertendo o status para minúsculas e trocando espaços por hifens (ex: `"em andamento"` → `"em-andamento"`)
+
+**Retorna:** HTML puro (não JSON)
+
+---
+
+#### BLOCO 4: `acao = 'listar_ajudas_professor'` (GET — Lista para o Professor)
+
+**Parâmetros GET opcionais:**
+- `ocultar_finalizadas` = `'0'` ou `'1'` — se `'1'`, exclui encerradas da query
+- `ordem` = `'asc'` ou `'desc'` — direção de ordenação por hora
+
+**Fluxo:**
+1. **Seção Destaque — Alunos em Atendimento:**
+   - Busca chamadas onde `status_ajuda = 'em análise'`
+   - Se houver, renderiza um bloco verde (`.em-atendimento-destaque`) no topo com:
+     - Bolinha pulsante verde (`.pulse-dot`)
+     - Cards com nome, tipo e hora de cada aluno sendo atendido
+
+2. **Lista principal:**
+   - SQL com ordenação por prioridade:
+     - `'em andamento'` = 1 (primeiro)
+     - `'em análise'` = 2
+     - `'encerramento'` = 3 (último)
+   - Depois por `hora` na direção escolhida
+
+3. Para cada chamada, gera HTML expansível:
+   ```html
+   <div class='chamada' id='chamada-{id}'>
+       <!-- Cabeçalho clicável (accordion) -->
+       <div class='cabecalho-chamada' onclick='expandirChamada({id})'>
+           <div class='info-principal'>
+               <strong>{nome_aluno}</strong> ({email_google}) pediu ajuda: <u>{tipo}</u>
+           </div>
+           <div class='info-secundaria'>
+               <span class='hora'>{hora}</span>
+               <span class='badge {classe_status}'>{status_ajuda}</span>
+           </div>
+       </div>
+       <!-- Detalhes ocultos (expandíveis) -->
+       <div class='detalhes-chamada'>
+           <p><strong>Descrição informada:</strong></p>
+           <p>{descricao ou "Sem descrição extra enviada."}</p>
+           <div class='acoes'>
+               {botões condicionais}
+           </div>
+       </div>
+   </div>
+   ```
+
+4. **Botões condicionais por status:**
+
+| Status atual | Botões exibidos |
+|-------------|----------------|
+| `em andamento` | 🗑️ **Excluir** (deleta do banco) + ✅ **Aceitar** (muda para "em análise") |
+| `em análise` | 🏁 **Finalizar Atendimento** (muda para "encerramento") |
+| `encerramento` | 🗑️ **Limpar do Histórico** (deleta do banco) + 🔄 **Reabrir Chamada** (volta para "em andamento") |
+
+**Retorna:** HTML puro
+
+---
+
+#### BLOCO 5: `acao = 'verificar_email_docente'` (POST — Redirecionamento automático de docentes)
+
+**Fluxo:**
+1. Recebe `email_google`
+2. Verifica se contém `'@docente.senai.br'`
+3. Se sim:
+   - Define `$_SESSION['prof_logado'] = true`
+   - Define `$_SESSION['email_docente'] = $email_google`
+   - Retorna `{ "docente": true }`
+4. Se não: Retorna `{ "docente": false }`
+
+**Uso:** Quando um aluno faz login com email de docente, é automaticamente redirecionado ao painel do professor.
+
+---
+
+### 4.6 `assets/aluno.js` — Lógica JavaScript do Aluno
+
+#### Variável global:
+- `googleUser` = `null` — armazena dados do usuário Google logado (`name`, `email`, `picture`)
+- `tipoSelecionado` = `''` — tipo de problema escolhido no modal
+
+---
+
+#### Função `window.onload` (Inicialização Google)
+1. `google.accounts.id.initialize({...})` — configura o Client ID
+2. `google.accounts.id.renderButton(...)` — renderiza o botão do Google dentro de `#googleBtnContainer`
+3. `google.accounts.id.prompt()` — dispara o pop-up "One Tap" se o navegador já tem sessão
+
+---
+
+#### Função `handleCredentialResponse(response)` — Callback de login bem-sucedido
+1. Decodifica o JWT com `decodeJwtResponse()`
+2. Salva `{ name, email, picture }` em `googleUser`
+3. **Verifica se é docente:** Envia `email_google` ao backend via `acao = 'verificar_email_docente'`
+   - Se `data.docente === true` → redireciona para `professor.php`
+4. Atualiza a barra visual (`#googleAuthBar`) para estado logado: foto, email, botão "Sair / Trocar Conta"
+5. Preenche `#nomeAluno` com o nome do Google e trava como `readOnly`
+
+---
+
+#### Função `fazerLogoutGoogle()`
+- Chama `google.accounts.id.disableAutoSelect()`
+- Limpa `googleUser = null`
+- Recarrega a página (`location.reload()`) para resetar tudo
+
+---
+
+#### Função `decodeJwtResponse(token)` — Decodificador JWT
+- Pega a parte 2 do JWT (payload)
+- Decodifica de Base64URL para JSON
+- Retorna o objeto com os dados do usuário
+
+---
+
+#### Função `abrirModal()`
+- **Bloqueio de segurança:** Se `googleUser === null` → alerta negando acesso
+- Mostra o modal (`display: flex`)
+- Foca no campo de descrição
+
+---
+
+#### Função `fecharModal()`
+- Esconde o modal (`display: none`)
+- Limpa `descricaoProblema` e esconde `#divDescricao`
+- Remove classe `.ativo` de todos os botões de tipo
+- Reseta `tipoSelecionado = ''`
+
+---
+
+#### Função `window.onclick(event)` — Fechar modal clicando fora
+- Se o clique foi no overlay (fundo escuro) → chama `fecharModal()`
+
+---
+
+#### Função `selecionarTipo(tipo)` — Seleção do tipo de problema
+1. Define `tipoSelecionado = tipo`
+2. Remove `.ativo` de todos os `.btn-tipo`
+3. Adiciona `.ativo` ao botão clicado
+4. Se `tipo === 'outros'`: mostra `#divDescricao` e foca no textarea
+5. Caso contrário: esconde `#divDescricao` e limpa o textarea
+
+---
+
+#### Função `enviarPedido()` — Envio da chamada de ajuda
+
+**Validações (em ordem):**
+1. `googleUser` existe? Se não → alerta e fecha modal
+2. `nome` não está vazio?
+3. `tipoSelecionado` não está vazio?
+4. Se `tipo === 'outros'`, `descricao` não pode estar vazia?
+
+**Após validação:**
+1. **Trava o botão** por 3 segundos (`disabled = true`, texto muda para "Enviando... Aguarde 3s")
+2. Monta `FormData` com: `acao='criar_chamada'`, `nome`, `tipo`, `descricao`, `email_google`
+3. Envia via `fetch('backend.php', { method: 'POST', body: formData })`
+4. Se sucesso: fecha modal e chama `carregarFila()` imediatamente
+5. Se erro: mostra alerta
+6. **Sempre:** Após 3 segundos, destrava o botão (independente do resultado)
+
+> **Regra de negócio:** O botão fica travado por exatamente 3 segundos para impedir cliques duplos
+
+---
+
+#### Função `carregarFila()` — Polling da lista do aluno
+1. `fetch('backend.php?acao=listar_ajudas_abertas')`
+2. Recebe HTML pronto
+3. Injeta em `#listaAjudas`
+
+**Auto-atualização:** `setInterval(carregarFila, 5000)` — a cada 5 segundos
+**Primeira carga:** `carregarFila()` chamada imediatamente
+
+---
+
+### 4.7 `assets/professor.js` — Lógica JavaScript do Professor
+
+#### Função `carregarChamadas()` — Polling da lista do professor
+1. Lê estado dos toggles:
+   - `#toggleOcultar` (checked → oculta finalizadas)
+   - `#toggleOrdem` (checked → mais antiga primeiro)
+2. Monta URL: `backend.php?acao=listar_ajudas_professor&ocultar_finalizadas={0|1}&ordem={asc|desc}`
+3. **Mecanismo anti-refresh:** Só atualiza o HTML se `container.dataset.status_ocupado` estiver vazio (evita fechar accordion enquanto o professor lê)
+4. Injeta HTML em `#listaChamadas`
+
+**Auto-atualização:** `setInterval(carregarChamadas, 5000)`
+**Primeira carga:** `carregarChamadas()` chamada imediatamente
+
+---
+
+#### Função `alternarOcultar()` e `alternarOrdem()`
+- Ambas apenas chamam `carregarChamadas()` para recarregar imediatamente com os novos filtros
+
+---
+
+#### Função `expandirChamada(id)` — Accordion (expandir/recolher)
+1. Pega a div `#chamada-{id}`
+2. Se já está `.expandido`:
+   - Remove a classe
+   - **Libera** o auto-update (`dataset.status_ocupado = ''`)
+3. Se não está expandida:
+   - Fecha TODAS as outras (`remove('expandido')`)
+   - Expande a clicada (`add('expandido')`)
+   - **Trava** o auto-update (`dataset.status_ocupado = 'true'`) para o professor poder agir sem que os dados mudem
+
+> **Funcionalidade importante:** O auto-refresh é pausado automaticamente quando o professor expande uma chamada, impedindo que a ação feche sozinha
+
+---
+
+#### Função `acaoChamada(id, acao)` — Ações do professor (Aceitar/Finalizar/Excluir/Reabrir)
+1. Monta `FormData`: `acao='mudar_status'`, `id`, `status_novo={acao}`
+2. Coloca o botão em estado "Processando..." (`disabled = true`)
+3. Envia via `fetch('backend.php', { method: 'POST' })`
+4. Se sucesso:
+   - **Libera o auto-update** (`dataset.status_ocupado = ''`)
+   - Chama `carregarChamadas()` imediatamente
+5. Se erro: mostra alerta e restaura o botão
+
+---
+
+### 4.8 `assets/effects.js` — Efeitos Visuais Globais
+
+**Importado em TODAS as páginas** (index, aluno, professor).
+
+#### Parte 1: Fundo Animado com Esferas (DOMContentLoaded)
+1. Cria `<div class='bg-animation'>` via DOM
+2. Gera **15 esferas** (`.sphere`) com:
+   - Tamanho aleatório entre 20px e 120px
+   - Posição aleatória em `vw` e `vh`
+   - Duração da animação entre 8s e 18s
+   - Delay aleatório entre 0 e 5s
+3. Prepend ao `<body>` (fica atrás de tudo com `z-index: -1`)
+
+#### Parte 2: Efeito Ripple (delegação no `body`)
+1. Escuta cliques no `body`
+2. Verifica se o alvo é um botão (`.btn`, `.btn-submit`, `.btn-tipo`, `.btn-aceitar`, `.btn-finalizar`, `.btn-excluir`, `.cabecalho-chamada`)
+3. Adiciona classe `.ripple` ao elemento
+4. Cria `<span class='circle'>` posicionado exatamente onde o mouse clicou
+5. Depois de 600ms, remove o `<span>` do DOM
+
+> **Delegação de eventos:** Funciona em botões criados dinamicamente via AJAX (não precisa re-bind)
+
+---
+
+### 4.9 `assets/style.css` — Estilos Globais (712 linhas)
+
+#### Seções principais:
+
+| Seção | O que estiliza |
+|-------|---------------|
+| **Reset global** | `* { box-sizing: border-box; font-family: Segoe UI, ... }` |
+| **Fundo animado** | `.bg-animation`, `.sphere`, `@keyframes float`, `@keyframes gradientBG` |
+| **Ripple effect** | `.ripple`, `.circle`, `@keyframes ripple-anim` |
+| **Body** | Gradiente animado vermelho-escuro (`#FF0020`, `#65001F`), background-size 400% |
+| **Login** | `.login-container` — caixa branca centralizada com hover lift |
+| **Logo animada** | `@keyframes logo` — rotação + escala pendular |
+| **Painéis** | `.painel-container` — caixa principal, `.topo-painel` — cabeçalho flex |
+| **Botões** | `.btn` (vermelho), `.btn-voltar` (cinza), `.btn-submit` (vermelho full-width) |
+| **Badges de status** | `.badge.em-andamento` (amarelo), `.badge.em-análise` (verde), `.badge.encerramento` (cinza) |
+| **Aluno — itens** | `.ajuda-item` — caixa com borda esquerda vermelha |
+| **Professor — chamadas** | `.chamada` — card expansível, `.cabecalho-chamada` — clickável |
+| **Accordion** | `.detalhes-chamada` (hidden) → `.chamada.expandido .detalhes-chamada` (visible, max-height 250px) |
+| **Ações** | `.acoes` — flex container, `.btn-aceitar` (verde), `.btn-excluir` (outline vermelho), `.btn-finalizar` (vermelho) |
+| **Modal** | `.modal` — overlay fixo, `.modal-content` — caixa branca centralizada |
+| **Botões de tipo** | `.botoes-tipo` — grid 2 colunas, `.btn-tipo.ativo` — borda vermelha |
+| **Toggles brutalistas** | `.brutalist-toggle` — checkbox customizado estilo brutalista |
+| **Filtros do professor** | `.filtros-professor` — flex container |
+| **Destaque atendimento** | `.em-atendimento-destaque` — fundo verde, `.pulse-dot` — bolinha pulsante |
+| **Reabrir** | `.btn-reabrir` — botão azul (`#4285f4`) |
+
+#### Paleta de cores principal:
+- **Vermelho principal:** `#FF0020`
+- **Vermelho escuro (gradiente):** `#65001F`
+- **Verde (aceitar/análise):** `#34a853` / `#28a745`
+- **Amarelo (andamento):** `#fbbc05`
+- **Cinza (encerrado):** `#aeb1b4`
+- **Azul (reabrir):** `#4285f4`
+- **Vermelho destrutivo (excluir):** `#dc3545`
+
+---
+
+## 5. Funcionalidades Detalhadas — Fluxos de Trabalho
+
+### 5.1 ✅ Criação de Chamada (Aluno)
+
+```
+1. Aluno acessa index.php → Seleciona "Aluno" → Entra em aluno.php
+2. Faz login com conta Google (barra amarela → barra verde)
+3. Clica "+ Criar Nova Ajuda" → Modal abre
+4. Nome é preenchido automaticamente (Google) e travado como readonly
+5. Seleciona um dos 5 tipos de problema:
+   - Se qualquer tipo != "outros" → descrição fica nula no banco
+   - Se "outros" → campo textarea aparece, obrigatório
+6. Clica "Enviar Pedido de Ajuda"
+7. Botão trava por 3 segundos
+8. Backend insere com status "em andamento"
+9. Modal fecha, lista atualiza imediatamente
+```
+
+### 5.2 ✅ Visualização pelo Aluno
+
+```
+1. Lista exibe todas as chamadas EXCETO as com status "encerramento"
+2. Cada item mostra: nome, tipo, badge de status colorido, hora
+3. Auto-atualiza a cada 5 segundos via polling AJAX
+4. Aluno NÃO pode editar, excluir ou agir sobre chamadas
+```
+
+### 5.3 ✅ Gerenciamento pelo Professor
+
+```
+1. Professor acessa index.php → Seleciona "Professor" → Digita senha → Entra em professor.php
+   OU: Faz login Google com email @docente.senai.br → Redirecionado automaticamente
+2. Vê todas as chamadas organizadas por prioridade (andamento > análise > encerramento)
+3. Seção destacada verde no topo mostra alunos em atendimento agora (bolinha pulsante)
+4. Cada chamada é um accordion (expandir/recolher ao clicar)
+5. Auto-atualiza a cada 5 segundos, MAS pausa quando uma chamada está expandida
+```
+
+### 5.4 ✅ Botões de Feedback (Transição de Status)
+
+| Botão | Visível quando | Ação | Resultado |
+|-------|---------------|------|-----------|
+| ✅ **Aceitar** | Status = "em andamento" | Professor aceita ajudar | Status → "em análise" |
+| 🏁 **Finalizar Atendimento** | Status = "em análise" | Professor encerra | Status → "encerramento" |
+| 🔄 **Reabrir Chamada** | Status = "encerramento" | Professor reabre | Status → "em andamento" |
+
+### 5.5 ✅ Exclusão e Remoção do Histórico
+
+| Botão | Visível quando | Ação |
+|-------|---------------|------|
+| 🗑️ **Excluir** | Status = "em andamento" | Deleta permanentemente do banco |
+| 🗑️ **Limpar do Histórico** | Status = "encerramento" | Deleta permanentemente do banco |
+
+> **Comportamento:** Ambos os botões executam `DELETE FROM ajuda WHERE id = ?`. A chamada desaparece completamente do sistema.
+
+### 5.6 ✅ Ocultar/Exibir Chamadas Finalizadas
+
+```
+1. Toggle "Ocultar Finalizadas" no painel do professor
+2. Quando ATIVADO: a query SQL adiciona WHERE status_ajuda != 'encerramento'
+3. Quando DESATIVADO: mostra todas as chamadas (padrão)
+4. Alternar recarrega a lista imediatamente
+```
+
+### 5.7 ✅ Reabertura de Chamadas
+
+```
+1. Chamada com status "encerramento" exibe botão 🔄 "Reabrir Chamada" (azul)
+2. Ao clicar, backend muda status para "em andamento"
+3. Chamada volta ao topo da fila como se fosse nova
+4. Aluno passa a vê-la novamente na lista (pois não é mais "encerramento")
+```
+
+### 5.8 ✅ Ordenação de Chamadas
+
+```
+1. Toggle "Mais Antiga Primeiro" no painel do professor
+2. Quando ATIVADO: ordena por hora ASC (mais antiga primeiro)
+3. Quando DESATIVADO: ordena por hora DESC (mais recente primeiro, padrão)
+4. A ordenação de prioridade por status é sempre mantida
+```
+
+### 5.9 ✅ Redirecionamento Automático de Docentes
+
+```
+1. Pessoa entra como "Aluno" e faz login Google
+2. Backend verifica se email contém "@docente.senai.br"
+3. Se sim: marca sessão e redireciona automaticamente para professor.php
+4. Se não: permanece como aluno normalmente
+```
+
+---
+
+## 6. Mecanismos Técnicos Importantes
+
+### 6.1 Polling (Auto-Atualização)
+- Aluno: `setInterval(carregarFila, 5000)` — a cada 5 segundos
+- Professor: `setInterval(carregarChamadas, 5000)` — a cada 5 segundos
+- Professor tem mecanismo de **trava**: quando accordion está aberto, o polling não sobrescreve o HTML
+
+### 6.2 Normalização de Status para CSS
+- O status vem do banco como texto (ex: `"em análise"`)
+- É convertido para classe CSS: `mb_strtolower()` + `str_replace(' ', '-')` → `"em-análise"`
+- Isso gera classes como `.badge.em-andamento`, `.badge.em-análise`, `.badge.encerramento`
+
+### 6.3 Cache Busting
+- Todos os CSS e JS são importados com `?v=<?= time() ?>` para forçar o navegador a sempre buscar a versão mais recente
+
+### 6.4 Segurança
+- **Session PHP:** Professor precisa de `$_SESSION['prof_logado'] === true` para acessar `professor.php` e executar ações
+- **Google Auth:** Aluno precisa estar logado para abrir o modal (verificação no frontend)
+- **Email no backend:** `email_google` é verificado como não-vazio antes de inserir
+- **SQL seguro:** Usa prepared statements (`?`) em todas as queries
+
+### 6.5 Compatibilidade Linux (InfinityFree)
+- `LOWER()` usado nas queries SQL para comparação case-insensitive
+- Classes CSS geradas em minúsculas para evitar falhas em filesystems case-sensitive
+- `@charset "UTF-8"` declarado no CSS
+
+---
+
+## 7. Resumo para Recriação
+
+Para recriar esta aplicação com nomes e design diferentes:
+
+1. **Banco:** Uma tabela com campos: id, nome_usuario, email, descricao, tipo, hora_criacao, status (3 estados + transições)
+2. **Login:** Página com escolha de perfil (usuário comum vs admin), admin com senha, detecção automática por domínio de email
+3. **Painel do usuário comum:** Modal de criação com tipos pré-definidos + "outro" com descrição, lista em tempo real (polling 5s), autenticação Google obrigatória
+4. **Painel do admin:** Lista accordéon expansível, botões condicionais por status, toggles de filtro (ocultar encerrados + ordenação), seção destaque para itens em andamento, auto-refresh com trava
+5. **Ciclo de status:** pendente → aceito → finalizado (+ reabertura + exclusão)
+6. **Visual:** Fundo animado com gradiente + esferas flutuantes, efeito ripple em botões, toggles brutalistas, badges coloridos por status, hover lift em cards
